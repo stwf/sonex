@@ -3,27 +3,28 @@ defmodule Sonex.Player do
   import SweetXml
   alias Sonex.SOAP
 
-  def setName(%SonosDevice{} = device, new_name ) do
-    {:ok, _ } = SOAP.build(:device, "SetZoneAttributes", [ ["DesiredZoneName", new_name],
-                                                     ["DesiredIcon", device.icon],
-                                                     ["DesiredConfiguration", device.config]
-                                                   ] )
-    |> SOAP.post(device)
+  def setName(%SonosDevice{} = device, new_name) do
+    {:ok, _} =
+      SOAP.build(:device, "SetZoneAttributes", [
+        ["DesiredZoneName", new_name],
+        ["DesiredIcon", device.icon],
+        ["DesiredConfiguration", device.config]
+      ])
+      |> SOAP.post(device)
   end
 
   def control(%SonosDevice{} = device, action) do
     act_str =
-    case(action) do
-      :play -> "Play"
-      :pause -> "Pause"
-      :stop -> "Stop"
-      :prev -> "Previous"
-      :next -> "Next"
-    end
+      case(action) do
+        :play -> "Play"
+        :pause -> "Pause"
+        :stop -> "Stop"
+        :prev -> "Previous"
+        :next -> "Next"
+      end
 
     SOAP.build(:av, act_str, [["InstanceID", 0], ["Speed", 1]])
     |> SOAP.post(device)
-
   end
 
   def transport_info(%SonosDevice{} = device) do
@@ -37,39 +38,43 @@ defmodule Sonex.Player do
   end
 
   def group(%SonosDevice{} = device, :leave) do
-     SOAP.build(:av, "BecomeCoordinatorOfStandaloneGroup", [["InstanceID", 0]])
-     |> SOAP.post(device)
+    SOAP.build(:av, "BecomeCoordinatorOfStandaloneGroup", [["InstanceID", 0]])
+    |> SOAP.post(device)
   end
 
   def group(%SonosDevice{} = device, :join, coordinator_name) do
-     coordinator = Sonex.Discovery.playerByName(coordinator_name)
-     args = [["InstanceID", 0], ["CurrentURI", "x-rincon:" <> coordinator.usnID], ["CurrentURIMetaData", ""]]
+    coordinator = Sonex.Discovery.playerByName(coordinator_name)
 
-     SOAP.build(:av, "SetAVTransportURI", args )
-     |> SOAP.post(device)
+    args = [
+      ["InstanceID", 0],
+      ["CurrentURI", "x-rincon:" <> coordinator.usnID],
+      ["CurrentURIMetaData", ""]
+    ]
+
+    SOAP.build(:av, "SetAVTransportURI", args)
+    |> SOAP.post(device)
   end
 
   def audio(%SonosDevice{} = device, :volume, level) when level > 0 and level < 100 do
-     args = [["InstanceID", 0], ["Channel", "Master"], ["DesiredVolume", level]]
-     SOAP.build(:rendered, "SetVolume", args )
-     |> SOAP.post(device)
+    args = [["InstanceID", 0], ["Channel", "Master"], ["DesiredVolume", level]]
+
+    SOAP.build(:rendered, "SetVolume", args)
+    |> SOAP.post(device)
   end
 
   def audio(%SonosDevice{} = device, :volume) do
     args = [["InstanceID", 0], ["Channel", "Master"]]
-     SOAP.build(:rendered, "GetVolume", args )
-     |> SOAP.post(device)
+
+    SOAP.build(:rendered, "GetVolume", args)
+    |> SOAP.post(device)
   end
 
-
   defp refresh_zones({:ok, response_body}) do
-      Sonex.Discovery.discover()
-      {:ok, response_body}
+    Sonex.Discovery.discover()
+    {:ok, response_body}
   end
 
   defp refresh_zones({:error, err_msg}) do
-      {:error, err_msg}
+    {:error, err_msg}
   end
-
-
 end
