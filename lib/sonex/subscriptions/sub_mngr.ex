@@ -15,8 +15,8 @@ defmodule Sonex.SubMngr do
          [
            {"/ZoneGroupTopology", Sonex.SubHandlerZone, []},
            {"/RenderingControl", Sonex.SubHandlerRender, []},
-           {"/AVTransport", Sonex.SubHandlerAV, []}
-           #  {"/DeviceProperties", Sonex.SubHandlerDevice, []}
+           {"/AVTransport", Sonex.SubHandlerAV, []},
+           {"/DeviceProperties", Sonex.SubHandlerDevice, []}
          ]}
       ])
 
@@ -24,7 +24,7 @@ defmodule Sonex.SubMngr do
       :cowboy.start_clear(
         :http,
         [{:port, state.port}],
-        %{:env => %{dispatch => dispatch}}
+        %{env: %{dispatch: dispatch}}
       )
 
     # IO.inspect Sonex.Discovery.players
@@ -47,6 +47,8 @@ defmodule Sonex.SubMngr do
 
   def handle_call({:subscribe, device, service}, _from, state) do
     {:ok, sub_id} = subscribe_req(device, service, state.port)
+
+
     # resubscribe 1 minute before sub timesout
     {:ok, timer} = :timer.send_interval(@resub, {:sub_interval, device, service})
 
@@ -59,30 +61,26 @@ defmodule Sonex.SubMngr do
      }}
   end
 
-  def handle_call({:unsubscribe, device, service, sub_id}, _from, %{subs: sub_list} = state) do
-    {:ok, sub_id} = unsubscribe_req(device, service, sub_id)
-    to_unsub = Enum.find(sub_list, fn s -> s == sub_id end)
-    :timer.cancel(to_unsub.timer)
-    new_subs = Enum.filter(sub_list, fn s -> s != sub_id end)
-    {:reply, :ok, %{state | subs: new_subs}}
-  end
-
   def handle_info({:sub_interval, device, service}, state) do
     subscribe_req(device, service, state.port)
     {:noreply, state}
   end
 
-  defp subscribe_req(%ZonePlayer{} = device, service, port) do
-    uri = "http://#{device.info.ip}:1400#{service.event}"
+
+  def handle_info(data, state) do
+    {:noreply, state}
+  end
+
+  defp subscribe_req(%SonosDevice{} = device, service, port) do
+    uri = "http://#{device.ip}:1400#{service.event}"
     req_headers = sub_headers(port, service)
 
     HTTPoison.request!(:subscribe, uri, "", req_headers)
     |> handle_sub_response()
   end
 
-
-  defp subscribe_req(%SonosDevice{} = device, service, port) do
-    uri = "http://#{device.ip}:1400#{service.event}"
+  defp subscribe_req(device, service, port) do
+    uri = "http://#{device.info.ip}:1400#{service.event}"
     req_headers = sub_headers(port, service)
 
     HTTPoison.request!(:subscribe, uri, "", req_headers)
@@ -97,18 +95,18 @@ defmodule Sonex.SubMngr do
       HTTPoison.request!(:unsubscribe, uri, "", req_headers)
       |> handle_sub_response()
 
-    case(valid_resp) do
-      {:ok, _res_body} ->
-        {:ok, %{msg: "Unsubscription successful"}}
+    _resp =
+      case(valid_resp) do
+        {:ok, _res_body} ->
+          {:ok, %{msg: "Unsubscription successful"}}
 
-      {:error, err_msg} ->
-        {:error, err_msg}
-    end
+        {:error, err_msg} ->
+          {:error, err_msg}
+      end
   end
 
   defp sub_headers(port, serv) do
-    {:ok, {a, b, c, d}} =
-      Sonex.Discovery.get_ip()
+    {:ok, {a, b, c, d}} = Sonex.Discovery.get_ip()
 
     cb_uri =
       case(serv) do

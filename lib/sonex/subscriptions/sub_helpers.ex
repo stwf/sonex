@@ -1,5 +1,6 @@
 defmodule Sonex.SubHelpers do
   def create_sub_data(request, type) do
+    IO.inspect(request, label: "request is in subhelpers")
     {:undefined, "uuid:" <> uuid_raw, _} = :cowboy_req.parse_header(<<"sid">>, request)
     {:undefined, seq, _} = :cowboy_req.parse_header(<<"seq">>, request)
     [header, main, _sub_id] = String.split(uuid_raw, "_")
@@ -8,7 +9,7 @@ defmodule Sonex.SubHelpers do
   end
 
   def clean_xml_str(xml) do
-    cleaned_xml =
+    _cleaned_xml =
       xml
       |> clean_resp("&lt;", "<")
       |> clean_resp("&gt;", ">")

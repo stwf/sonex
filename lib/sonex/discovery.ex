@@ -18,8 +18,8 @@ defmodule Sonex.Discovery do
   @multicastaddr {239, 255, 255, 250}
   @multicastport 1900
 
-  def get_ip() do
-    eth0 = to_charlist("eth0")
+  def get_ip do
+    _eth0 = to_charlist("eth0")
     en0 = to_charlist("en0")
     {:ok, test_socket} = :inet_udp.open(8989, [])
 
@@ -181,7 +181,7 @@ defmodule Sonex.Discovery do
     {:noreply, state}
   end
 
-  def handle_info({:udp, _socket, ip, _fromport, packet}, state) do
+  def handle_info({:udp, socket, ip, _fromport, packet}, state) do
     %DiscoverState{players: players_list} = state
     this_player = parse_upnp(ip, packet)
 
@@ -248,7 +248,7 @@ defmodule Sonex.Discovery do
         end
       else
         return_state
-    end
+      end
 
     return_state
   end
