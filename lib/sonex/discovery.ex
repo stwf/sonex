@@ -82,6 +82,10 @@ defmodule Sonex.Discovery do
     GenServer.call(__MODULE__, {:player_by_name, name})
   end
 
+  def players_in_zone(zone_uuid) do
+    GenServer.call(__MODULE__, {:players_in_zone, zone_uuid})
+  end
+
   @doc """
   Retuns a single Sonos Player Struct, or nil of does not exist.
   """
@@ -155,6 +159,14 @@ defmodule Sonex.Discovery do
           Enum.filter(state.players, fn p -> zone.uuid == p.coordinator_uuid end)
           |> Enum.reverse()
       end
+
+    {:reply, players_in_zone, state}
+  end
+
+  def handle_call({:players_in_zone, uuid}, _from, %DiscoverState{} = state) do
+    players_in_zone =
+      Enum.filter(state.players, fn p -> uuid == p.coordinator_uuid end)
+        |> Enum.reverse()
 
     {:reply, players_in_zone, state}
   end

@@ -4,13 +4,17 @@ defmodule Sonex.SubHandlerDevice do
   alias Sonex.SubHelpers
 
   def init(req, _opts) do
+    req |> IO.inspect(label: "device req")
+        handle(req, %{})
+
     {:ok, req, :no_state}
   end
 
   def handle(request, state) do
-    {:ok, data, _} = :cowboy_req.read_body(request, [])
+    {:ok, data, _} = :cowboy_req.read_body(request, %{})
 
     sub_info_base = SubHelpers.create_sub_data(request, :device)
+      |> IO.inspect(label: "dev sub_info_base")
 
     clean_xml = SubHelpers.clean_xml_str(data)
     # "<dc:title> </dc:title>"

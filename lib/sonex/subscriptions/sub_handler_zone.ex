@@ -3,14 +3,15 @@ defmodule Sonex.SubHandlerZone do
   alias Sonex.SubHelpers
 
   def init(req, _opts) do
+    handle(req, %{})
+
     {:ok, req, :no_state}
   end
 
   def handle(request, state) do
-    {:ok, data, _} = :cowboy_req.read_body(request, [])
+    {:ok, data, _} = :cowboy_req.read_body(request, %{})
 
     sub_info_base = SubHelpers.create_sub_data(request, :zone)
-
     clean_xml = SubHelpers.clean_xml_str(data)
 
     zone_info =
@@ -24,7 +25,8 @@ defmodule Sonex.SubHandlerZone do
           config: ~x"//./@Configuration"i,
           icon: ~x"//./@Icon"s
         ]
-      )
+      ) |> IO.inspect(label: "Zone Info")
+
 
     Enum.each(zone_info, fn zone_group ->
       Enum.each(zone_group.members, fn member ->
@@ -40,10 +42,7 @@ defmodule Sonex.SubHandlerZone do
     end)
 
     sub_info = %SubData{sub_info_base | content: zone_info}
-
-    IO.inspect(sub_info)
-
-    {:ok, reply} = :cowboy_req.reply(200, request)
+    reply = :cowboy_req.reply(200, request)
 
     # handle/2 returns a tuple starting containing :ok, the reply, and the
     # current state of the handler.
@@ -52,7 +51,7 @@ defmodule Sonex.SubHandlerZone do
 
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
-  def terminate(reason, request, state) do
+  def terminate(_reason, _request, _state) do
 #    IO.puts("Terminating for reason: #{inspect(reason)}")
 #    IO.puts("Terminating after request: #{inspect(request)}")
 #    IO.puts("Terminating with state: #{inspect(state)}")

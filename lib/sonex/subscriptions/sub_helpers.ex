@@ -1,11 +1,13 @@
 defmodule Sonex.SubHelpers do
-  def create_sub_data(request, type) do
-    IO.inspect(request, label: "request is in subhelpers")
-    {:undefined, "uuid:" <> uuid_raw, _} = :cowboy_req.parse_header(<<"sid">>, request)
-    {:undefined, seq, _} = :cowboy_req.parse_header(<<"seq">>, request)
+  def create_sub_data(%{headers: %{"sid" => sid, "seq" => seq}} = request, type) do
+    "uuid:" <> uuid_raw = sid
     [header, main, _sub_id] = String.split(uuid_raw, "_")
     from_id = header <> "_" <> main
     %SubData{from: from_id, seq_num: seq, sub_id: uuid_raw, type: type}
+  end
+
+  def create_sub_data(request, type) do
+    IO.inspect(request, label: "requestrequestrequestrequestrequest")
   end
 
   def clean_xml_str(xml) do

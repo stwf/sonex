@@ -3,15 +3,18 @@ defmodule Sonex.SubHandlerRender do
   alias Sonex.SubHelpers
 
   def init(req, _opts) do
+    handle(req, %{})
     {:ok, req, :no_state}
   end
 
   def handle(request, state) do
-    {:ok, data, _} = :cowboy_req.read_body(request, [])
+    {:ok, data, _} = :cowboy_req.read_body(request, %{})
 
     sub_info_base = SubHelpers.create_sub_data(request, :renderer)
+      |> IO.inspect(label: "render sub_info_base")
 
     clean_xml = SubHelpers.clean_xml_str(data)
+      |> IO.inspect(label: "clean xml")
     # "<dc:title> </dc:title>"
     # IO.puts clean_xml
 
@@ -27,12 +30,11 @@ defmodule Sonex.SubHandlerRender do
       |> get_bass(event_xml)
       |> get_treble(event_xml)
       |> get_loudness(event_xml)
+      |> IO.inspect(label: "Render Subdata")
 
     # sub_info = %SubData{sub_info_base | content: sub_content_map}
 
-    IO.inspect(sub_content_map, label: sub_content_map)
-
-    {:ok, reply} = :cowboy_req.reply(200, request)
+    reply = :cowboy_req.reply(200, request)
 
     # handle/2 returns a tuple starting containing :ok, the reply, and the
     # current state of the handler.
@@ -111,8 +113,8 @@ defmodule Sonex.SubHandlerRender do
 
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
-  def terminate(reason, request, state) do
-#    IO.puts("Terminating for reason: #{inspect(reason)}")
+  def terminate(reason, _request, _state) do
+    IO.puts("Render Terminating for reason: #{inspect(reason)}")
 #    IO.puts("Terminating after request: #{inspect(request)}")
 #    IO.puts("Terminating with state: #{inspect(state)}")
     :ok
