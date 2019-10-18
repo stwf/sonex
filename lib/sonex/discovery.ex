@@ -193,7 +193,7 @@ defmodule Sonex.Discovery do
     {:noreply, state}
   end
 
-  def handle_info({:udp, socket, ip, _fromport, packet}, state) do
+  def handle_info({:udp, _socket, ip, _fromport, packet}, state) do
     %DiscoverState{players: players_list} = state
     this_player = parse_upnp(ip, packet)
 
@@ -242,8 +242,11 @@ defmodule Sonex.Discovery do
               build(this_player.uuid, this_player.ip, zone_coordinator, name, icon, config)
               |> Sonex.PlayerMonitor.create()
 
-              GenEvent.notify(Sonex.EventMngr, {:discovered, player})
-              GenEvent.notify(Sonex.EventMngr, {:start, player})
+              Registry.dispatch(Sonex, "devices", fn entries ->
+                for {pid, _} <- entries, do: send(pid, {:discovered, player})
+                for {pid, _} <- entries, do: send(pid, {:start, player})
+              end)
+
               # new_players = [this_player | players_list ]
               new_players = [player | players_list]
 
@@ -352,7 +355,7 @@ defmodule Sonex.Discovery do
 
     if String.contains?(vers_model, "Sonos") do
       ["SERVER:", "Linux", "UPnP/1.0", version, model_raw] = String.split(vers_model)
-      model = String.lstrip(model_raw, ?() |> String.rstrip(?))
+      model = String.trim(model_raw)
       "USN: uuid:" <> usn = Enum.fetch!(split_resp, 6)
       uuid = String.split(usn, "::") |> Enum.at(0)
       "X-RINCON-HOUSEHOLD: " <> household = Enum.fetch!(split_resp, 7)

@@ -38,7 +38,7 @@ defmodule Sonex.SubHandlerDevice do
 
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
-  def terminate(reason, request, state) do
+  def terminate(_reason, _request, _state) do
 #    IO.puts("Terminating for reason: #{inspect(reason)}")
 #    IO.puts("Terminating after request: #{inspect(request)}")
 #    IO.puts("Terminating with state: #{inspect(state)}")

@@ -68,6 +68,7 @@ defmodule Sonex.SubMngr do
 
 
   def handle_info(data, state) do
+    IO.inspect(data, label: "unknown handle_info")
     {:noreply, state}
   end
 

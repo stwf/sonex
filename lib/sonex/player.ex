@@ -1,6 +1,5 @@
 defmodule Sonex.Player do
   require Logger
-  import SweetXml
   alias Sonex.SOAP
 
   def setName(%SonosDevice{} = device, new_name) do

@@ -56,7 +56,10 @@ defmodule Sonex.PlayerMonitor do
 
   def init(%ZonePlayer{} = player) do
     # triggers subscription
-    GenEvent.notify(Sonex.EventMngr, {:discovered, player})
+    Registry.dispatch(Sonex, "devices", fn entries ->
+      for {pid, _} <- entries, do: send(pid, {:discovered, player})
+    end)
+
     {:ok, player}
   end
 

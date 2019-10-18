@@ -35,7 +35,7 @@ defmodule Sonex.SubHandlerAV do
             duration: xpath(event_xml, ~x"//Event/InstanceID/CurrentTrackDuration/@val"s)
           }
         }
-    } |> IO.inspect(label: "AV SubData")
+    }
 
     player_pid = GenServer.whereis({:global, {:player, sub_info_base.from}})
     GenServer.cast(player_pid, {:set_state, sub_info.content})

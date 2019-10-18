@@ -11,10 +11,8 @@ defmodule Sonex.SubHandlerRender do
     {:ok, data, _} = :cowboy_req.read_body(request, %{})
 
     sub_info_base = SubHelpers.create_sub_data(request, :renderer)
-      |> IO.inspect(label: "render sub_info_base")
 
     clean_xml = SubHelpers.clean_xml_str(data)
-      |> IO.inspect(label: "clean xml")
     # "<dc:title> </dc:title>"
     # IO.puts clean_xml
 
@@ -24,13 +22,12 @@ defmodule Sonex.SubHandlerRender do
     # mute_info = xpath(event_xml, ~x"//Event/InstanceID/Mute/@val"il)
     player_pid = GenServer.whereis({:global, {:player, sub_info_base.from}})
 
-    sub_content_map =
+    _sub_content_map =
       get_volume(player_pid, event_xml)
       |> get_mute(event_xml)
       |> get_bass(event_xml)
       |> get_treble(event_xml)
       |> get_loudness(event_xml)
-      |> IO.inspect(label: "Render Subdata")
 
     # sub_info = %SubData{sub_info_base | content: sub_content_map}
 
@@ -113,8 +110,8 @@ defmodule Sonex.SubHandlerRender do
 
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
-  def terminate(reason, _request, _state) do
-    IO.puts("Render Terminating for reason: #{inspect(reason)}")
+  def terminate(_reason, _request, _state) do
+ #   IO.puts("Render Terminating for reason: #{inspect(reason)}")
 #    IO.puts("Terminating after request: #{inspect(request)}")
 #    IO.puts("Terminating with state: #{inspect(state)}")
     :ok
