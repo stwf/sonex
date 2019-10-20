@@ -8,7 +8,7 @@ defmodule Sonex.EventMngr do
 
 
   def init(args) do
-    {:ok, _} = Registry.register(Sonex, "devices", [])
+#    {:ok, _} = Registry.register(Sonex, "devices", [])
 
     {:ok, args}
   end
@@ -24,31 +24,17 @@ defmodule Sonex.EventMngr do
    {:ok, state}
  end
 
- def handle_info({:start, device}, state) do
-  Logger.info("start event received: #{inspect(device.name)}")
+def handle_info({:start, new_device}, state), do: {:noreply, state}
 
-  {:noreply, state}
-end
+def handle_info({:updated, _new_device}, state), do: {:noreply, state}
 
-def handle_info({:discovered, %ZonePlayer{} = new_device}, state) do
-    Logger.info("discovered device! #{inspect new_device.name}")
+def handle_info({:discovered, new_device}, state) do
+    Logger.error("discovered device! #{inspect new_device.name}")
     Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:renderer))
     Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:zone))
     Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:av))
     #Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:device))
-    #is this device a coordinator?
-    #case(new_device.uuid == new_device.coordinator_uuid) do
-    {:noreply, state}
-  end
 
-  def handle_info({:discovered, %SonosDevice{} = new_device}, state) do
-    Logger.info("discovered device! #{inspect new_device.name}")
-    Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:renderer))
-    Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:zone))
-    Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:av))
-    #Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:device))
-    #is this device a coordinator?
-    #case(new_device.uuid == new_device.coordinator_uuid) do
     {:noreply, state}
   end
 end

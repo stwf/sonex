@@ -1,6 +1,10 @@
 defmodule Sonex.PlayerMonitor do
   use GenServer
 
+  def start_link(%ZonePlayer{} = empty_state) do
+    GenServer.start_link(__MODULE__, empty_state, name: ref(empty_state.id))
+  end
+
   def create(%ZonePlayer{} = empty_state) do
     case GenServer.whereis(ref(empty_state.id)) do
       nil ->
@@ -50,10 +54,6 @@ defmodule Sonex.PlayerMonitor do
     end
   end
 
-  def start_link(%ZonePlayer{} = empty_state) do
-    GenServer.start_link(__MODULE__, empty_state, name: ref(empty_state.id))
-  end
-
   def init(%ZonePlayer{} = player) do
     # triggers subscription
     Registry.dispatch(Sonex, "devices", fn entries ->
@@ -65,40 +65,80 @@ defmodule Sonex.PlayerMonitor do
 
   # ...
 
-  def handle_cast({:set_name, name}, %ZonePlayer{} = player) do
-    {:noreply, %ZonePlayer{player | name: name}}
+  def handle_cast({:set_name, new_name},
+        %ZonePlayer{name: name} = player) when new_name != name do
+    new_player = %ZonePlayer{player | name: name}
+    update_device(new_player)
+    IO.puts("set_name")
+
+    {:noreply, new_player}
   end
 
-  def handle_cast({:set_coordinator, coordinator}, %ZonePlayer{} = player) do
-    {:noreply, %ZonePlayer{player | coordinator_id: coordinator}}
+  def handle_cast({:set_coordinator, coordinator},
+        %ZonePlayer{coordinator_id: coordinator_id} = player) when coordinator_id != coordinator do
+
+    IO.puts("set_coordinator")
+    new_player = %ZonePlayer{player | coordinator_id: coordinator}
+    update_device(new_player)
+
+    {:noreply, new_player}
   end
 
-  def handle_cast({:set_volume, volume_map}, %ZonePlayer{} = player) do
-    {:noreply,
-     %ZonePlayer{player | player_state: %PlayerState{player.player_state | volume: volume_map}}}
+  def handle_cast({:set_volume, volume_map},
+        %ZonePlayer{player_state: %PlayerState{volume: volume}} = player) when volume_map != volume do
+    new_player = 
+      %ZonePlayer{player | player_state: %PlayerState{player.player_state | volume: volume_map}}
+
+    IO.inspect(volume_map, label: "set_volume")
+    update_device(new_player)
+    {:noreply, new_player}
   end
 
-  def handle_cast({:set_mute, mute}, %ZonePlayer{} = player) do
-    {:noreply, %ZonePlayer{player | player_state: %PlayerState{player.player_state | mute: mute}}}
+  def handle_cast({:set_mute, new_mute},
+        %ZonePlayer{player_state: %PlayerState{mute: mute}} = player) when new_mute != mute do
+    new_player =
+      %ZonePlayer{player | player_state: %PlayerState{player.player_state | mute: new_mute}}
+
+    IO.puts("set_mute")
+    update_device(new_player)
+    {:noreply, new_player}
   end
 
-  def handle_cast({:set_treble, treble}, %ZonePlayer{} = player) do
-    {:noreply,
-     %ZonePlayer{player | player_state: %PlayerState{player.player_state | treble: treble}}}
+  def handle_cast({:set_treble, new_treble},
+        %ZonePlayer{player_state: %PlayerState{treble: treble}} = player) when new_treble != treble do
+    new_player =
+      %ZonePlayer{player | player_state: %PlayerState{player.player_state | treble: new_treble}}
+
+    IO.puts("set_treble #{treble} => #{new_treble}")
+    IO.puts("set_treble")
+    update_device(new_player)
+    {:noreply, new_player}
   end
 
-  def handle_cast({:set_bass, bass}, %ZonePlayer{} = player) do
-    {:noreply, %ZonePlayer{player | player_state: %PlayerState{player.player_state | bass: bass}}}
+  def handle_cast({:set_bass, new_bass},
+        %ZonePlayer{player_state: %PlayerState{bass: bass}} = player) when new_bass != bass do
+    new_player =
+      %ZonePlayer{player | player_state: %PlayerState{player.player_state | bass: bass}}
+
+    IO.puts("set_bass #{bass} => #{new_bass}")
+    update_device(new_player)
+    {:noreply, new_player}
   end
 
-  def handle_cast({:set_loudness, loudness}, %ZonePlayer{} = player) do
-    {:noreply,
-     %ZonePlayer{player | player_state: %PlayerState{player.player_state | loudness: loudness}}}
+  def handle_cast({:set_loudness, new_loudness},
+          %ZonePlayer{player_state: %PlayerState{loudness: loudness}} = player) when loudness != new_loudness do
+    new_player =
+      %ZonePlayer{player | player_state: %PlayerState{player.player_state | loudness: loudness}}
+
+    IO.puts("set_loudness #{loudness} => #{new_loudness}")
+
+    update_device(new_player)
+    {:noreply, new_player}
   end
 
   def handle_cast({:set_state, new_player_state}, %ZonePlayer{} = player) do
-    {:noreply,
-     %ZonePlayer{
+    new_player =
+      %ZonePlayer{
        player
        | player_state: %PlayerState{
            player.player_state
@@ -108,8 +148,13 @@ defmodule Sonex.PlayerMonitor do
              track_number: new_player_state.current_track,
              track_info: new_player_state.track_info
          }
-     }}
+     }
+    IO.puts("set_state")
+    update_device(new_player)     
+    {:noreply, new_player}
   end
+
+  def handle_cast(_, state), do: {:noreply, state}
 
   def handle_call({:name}, _from, %ZonePlayer{} = player) do
     {:reply, player.name, player}
@@ -131,5 +176,19 @@ defmodule Sonex.PlayerMonitor do
       player ->
         GenServer.call(player, message)
     end
+  end
+
+  defp update_device(%SonosDevice{name: name} = device) do
+    IO.inspect(name, label: "device updated")
+    Registry.dispatch(Sonex, "devices", fn entries ->
+      for {pid, _} <- entries, do: send(pid, {:updated, device})
+    end)
+  end
+
+  defp update_device(%ZonePlayer{name: name} = player) do
+    IO.inspect(name, label: "player updated")
+    Registry.dispatch(Sonex, "players", fn entries ->
+      for {pid, _} <- entries, do: send(pid, {:updated, player})
+    end)
   end
 end

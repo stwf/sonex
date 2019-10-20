@@ -8,6 +8,7 @@ defmodule Sonex.Application do
     children = [
       # Define workers and child supervisors to be supervised
       {Registry,  keys: :duplicate, name: Sonex},
+      Sonex.Network.State,
       Sonex.EventMngr,
       worker(Sonex.Discovery, []),
       worker(Sonex.SubMngr, []),

@@ -1,6 +1,7 @@
 defmodule Sonex.Player do
   require Logger
   alias Sonex.SOAP
+alias Sonex.Network.State
 
   def setName(%SonosDevice{} = device, new_name) do
     {:ok, _} =
@@ -42,7 +43,7 @@ defmodule Sonex.Player do
   end
 
   def group(%SonosDevice{} = device, :join, coordinator_name) do
-    coordinator = Sonex.Discovery.playerByName(coordinator_name)
+    coordinator = State.get_player(name: coordinator_name)
 
     args = [
       ["InstanceID", 0],
