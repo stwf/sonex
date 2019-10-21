@@ -8,7 +8,7 @@ defmodule Sonex.EventMngr do
 
 
   def init(args) do
-#    {:ok, _} = Registry.register(Sonex, "devices", [])
+    {:ok, _} = Registry.register(Sonex, "devices", [])
 
     {:ok, args}
   end
@@ -24,12 +24,12 @@ defmodule Sonex.EventMngr do
    {:ok, state}
  end
 
-def handle_info({:start, new_device}, state), do: {:noreply, state}
+def handle_info({:start, _new_device}, state), do: {:noreply, state}
 
 def handle_info({:updated, _new_device}, state), do: {:noreply, state}
 
 def handle_info({:discovered, new_device}, state) do
-    Logger.error("discovered device! #{inspect new_device.name}")
+
     Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:renderer))
     Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:zone))
     Sonex.SubMngr.subscribe(new_device, Sonex.Service.get(:av))

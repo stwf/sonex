@@ -133,10 +133,10 @@ defmodule Sonex.Service do
   end
 
   def actions(service) do
-    case(Enum.count(Sonex.Discovery.players()) > 0) do
+    case(Enum.count(Sonex.get_players()) > 0) do
       true ->
         serv = get(service)
-        {:ok, players} = Sonex.Discovery.players()
+        {:ok, players} = Sonex.get_players()
         player = hd(players)
 
         %HTTPoison.Response{status_code: 200, body: res_body, headers: _resp_headers} =

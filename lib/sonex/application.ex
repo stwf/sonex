@@ -6,7 +6,6 @@ defmodule Sonex.Application do
 
   def start(_type, _args) do
     children = [
-      # Define workers and child supervisors to be supervised
       {Registry,  keys: :duplicate, name: Sonex},
       Sonex.Network.State,
       Sonex.EventMngr,

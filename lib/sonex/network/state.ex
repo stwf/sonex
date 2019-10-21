@@ -12,7 +12,7 @@ defmodule Sonex.Network.State do
     GenServer.start_link(__MODULE__, initial_data(), name: __MODULE__)
   end
 
-  def get_player(name: name) do
+  def get_player(name: _name) do
 
   end
 
@@ -36,6 +36,14 @@ defmodule Sonex.Network.State do
     GenServer.call(__MODULE__, :zones)
   end
 
+  def set_coordinator(uuid, coordinator_uuid) do
+    GenServer.call(__MODULE__, {:set_coordinator, uuid, coordinator_uuid})
+  end
+
+  def set_name(uuid, name) do
+    GenServer.call(__MODULE__, {:set_name, uuid, name})
+  end
+
   def init(data) do
     {:ok, data}
   end
@@ -53,6 +61,38 @@ defmodule Sonex.Network.State do
          end)
 
     {:reply, res, state}
+  end
+
+  def handle_call({:set_coordinator, uuid, coordinator_uuid}, _from, %NetState{players: players} = state) do
+    players =
+      players
+      |> Map.get(uuid)
+      |> case do
+        nil ->
+          players
+        player ->
+          Process.send(self(), {:broadcast, player, :updated}, [])
+          Map.put(players, uuid, %{player | coordinator_uuid: coordinator_uuid})
+        end
+
+
+    {:reply, players, %{state | players: players}}
+  end
+
+  def handle_call({:set_name, uuid, name}, _from, %NetState{players: players} = state) do
+    players =
+      players
+      |> Map.get(uuid)
+      |> case do
+        nil ->
+          players
+        player ->
+          Process.send(self(), {:broadcast, player, :updated}, [])
+          Map.put(players, uuid, %{player | name: name})
+        end
+
+
+    {:reply, players, %{state | players: players}}
   end
 
   def handle_call(:players, _from, %NetState{players: players} = state) do
@@ -96,10 +136,6 @@ defmodule Sonex.Network.State do
     {:reply, players_in_zone, state}
   end
 
-  def handle_call(:players, _from, %NetState{players: players} = state) do
-    {:reply, Map.values(players), state}
-  end
-
   def handle_call(:count, _from, %NetState{players: players} = state) do
     {:reply, Enum.count(players), state}
   end
@@ -109,17 +145,32 @@ defmodule Sonex.Network.State do
   end
 
   def handle_call({:update_device, %SonosDevice{uuid: uuid} = device}, _from, %NetState{players: players} = state) do
-    Registry.dispatch(Sonex, "devices", fn pid ->
-      for {_, player} <- players do
-        send(pid, {:updates, player})
-      end
-    end)
+    players
+    |> Map.get(uuid)
+    |> case do
+      nil ->
+        Process.send(self(), {:broadcast, device, :discovered}, [])
+      _dev ->
+        Process.send(self(), {:broadcast, device, :updated}, [])
+    end
 
+  
     {:reply, :ok, %NetState{state | players: Map.put(players, uuid, device)}}
   end
 
   def terminate(reason, _state) do
     Logger.error("exiting Sonex.Network.State due to #{inspect(reason)}")
+  end
+
+  def handle_info({:broadcast, device, key}, state) do
+    Registry.dispatch(Sonex, "devices", fn entries ->
+      for {pid, _} <- entries do
+        IO.inspect(pid, label: "pid in send")
+        send(pid, {key, device})
+      end
+    end)
+
+    {:noreply, state}
   end
 
   defp is_coordinator?(%SonosDevice{uuid: uuid, coordinator_uuid: coordinator_uuid}) do

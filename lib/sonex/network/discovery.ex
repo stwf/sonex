@@ -233,7 +233,7 @@ defmodule Sonex.Discovery do
   defp get_uuid(%ZonePlayer{id: new_uuid}), do: new_uuid
   defp get_uuid(%SonosDevice{uuid: new_uuid}), do: new_uuid
 
-  defp get_ip do
+  def get_ip do
     _eth0 = to_charlist("eth0")
     en0 = to_charlist("en0")
     {:ok, test_socket} = :inet_udp.open(8989, [])

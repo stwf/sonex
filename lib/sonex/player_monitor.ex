@@ -17,7 +17,7 @@ defmodule Sonex.PlayerMonitor do
 
   def player_by_name(name) do
     player =
-      Enum.flat_map(Sonex.Discovery.players(), fn player ->
+      Enum.flat_map(Sonex.get_players(), fn player ->
         [GenServer.whereis({:global, {:player, player.uuid}})]
       end)
       |> Enum.filter(fn pid -> name == GenServer.call(pid, {:name}) end)
@@ -33,7 +33,7 @@ defmodule Sonex.PlayerMonitor do
 
   def player_by_name!(name) do
     player =
-      Enum.flat_map(Sonex.Discovery.players(), fn player ->
+      Enum.flat_map(Sonex.get_players(), fn player ->
         [GenServer.whereis({:global, {:player, player.uuid}})]
       end)
       |> Enum.filter(fn pid -> name == GenServer.call(pid, {:name}) end)
@@ -56,6 +56,7 @@ defmodule Sonex.PlayerMonitor do
 
   def init(%ZonePlayer{} = player) do
     # triggers subscription
+    IO.puts("here is where the dispatch is from")
     Registry.dispatch(Sonex, "devices", fn entries ->
       for {pid, _} <- entries, do: send(pid, {:discovered, player})
     end)
@@ -166,16 +167,6 @@ defmodule Sonex.PlayerMonitor do
 
   defp ref(player_id) do
     {:global, {:player, player_id}}
-  end
-
-  defp try_call(player_id, message) do
-    case GenServer.whereis(ref(player_id)) do
-      nil ->
-        {:error, :invalid_player}
-
-      player ->
-        GenServer.call(player, message)
-    end
   end
 
   defp update_device(%SonosDevice{name: name} = device) do

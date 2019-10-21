@@ -1,6 +1,8 @@
 defmodule Sonex.SubHandlerZone do
   import SweetXml
+  
   alias Sonex.SubHelpers
+  alias Sonex.Network.State
 
   def init(req, _opts) do
     handle(req, %{})
@@ -30,14 +32,9 @@ defmodule Sonex.SubHandlerZone do
 
     Enum.each(zone_info, fn zone_group ->
       Enum.each(zone_group.members, fn member ->
-        case(GenServer.whereis({:global, {:player, member.uuid}})) do
-          nil ->
-            IO.puts("#{member.uuid} process not started")
 
-          pid ->
-            GenServer.cast(pid, {:set_coordinator, zone_group.coordinator_uuid})
-            GenServer.cast(pid, {:set_name, member.name})
-        end
+        State.set_coordinator(member.uuid, zone_group.coordinator_uuid)
+        State.set_name(member.uuid, member.name)
       end)
     end)
 
