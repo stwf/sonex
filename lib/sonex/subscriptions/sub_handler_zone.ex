@@ -32,9 +32,9 @@ defmodule Sonex.SubHandlerZone do
 
     Enum.each(zone_info, fn zone_group ->
       Enum.each(zone_group.members, fn member ->
-
-        State.set_coordinator(member.uuid, zone_group.coordinator_uuid)
-        State.set_name(member.uuid, member.name)
+        player = State.get_player(member.uuid)
+        player = %{player | coordinator_uuid: zone_group.coordinator_uuid, name: member.name}
+        State.update_device(player)
       end)
     end)
 

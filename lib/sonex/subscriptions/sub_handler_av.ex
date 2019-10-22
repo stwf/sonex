@@ -1,6 +1,7 @@
 defmodule Sonex.SubHandlerAV do
   import SweetXml
   alias Sonex.SubHelpers
+  alias Sonex.Network.State
 
   def init(req, _opts) do
     handle(req, %{})
@@ -21,24 +22,24 @@ defmodule Sonex.SubHandlerAV do
     transport_state = xpath(event_xml, ~x"//Event/InstanceID/TransportState/@val"s)
     {title, artist, album} = track_details(event_xml)
 
-    sub_info = %SubData{
-      sub_info_base
-      | content: %{
-          current_state: transport_state,
-          mode: xpath(event_xml, ~x"//Event/InstanceID/CurrentPlayMode/@val"s),
-          current_track: xpath(event_xml, ~x"//Event/InstanceID/CurrentTrack/@val"i),
-          tracks_total: xpath(event_xml, ~x"//Event/InstanceID/NumberOfTracks/@val"i),
-          track_info: %{
-            title: title,
-            artist: artist,
-            album: album,
-            duration: xpath(event_xml, ~x"//Event/InstanceID/CurrentTrackDuration/@val"s)
-          }
-        }
-    }
+    player = %{player_state: player_state} = State.get_player(sub_info_base.from)
 
-    player_pid = GenServer.whereis({:global, {:player, sub_info_base.from}})
-    GenServer.cast(player_pid, {:set_state, sub_info.content})
+    new_state =
+      %{player_state |
+        current_state: transport_state,
+        current_mode: xpath(event_xml, ~x"//Event/InstanceID/CurrentPlayMode/@val"s),
+        current_track: xpath(event_xml, ~x"//Event/InstanceID/CurrentTrack/@val"i),
+        total_tracks: xpath(event_xml, ~x"//Event/InstanceID/NumberOfTracks/@val"i),
+        track_info: %{
+          title: title,
+          artist: artist,
+          album: album,
+          duration: xpath(event_xml, ~x"//Event/InstanceID/CurrentTrackDuration/@val"s)
+        }
+      }
+
+    player = %{player | player_state: new_state}
+    State.update_device(player)
 
     reply = :cowboy_req.reply(200, request)
 

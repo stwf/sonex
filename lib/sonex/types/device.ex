@@ -9,7 +9,8 @@ defmodule SonosDevice do
             version: nil,
             coordinator_uuid: nil,
             coordinator_pid: nil,
-            info: nil
+            info: nil,
+            player_state: %PlayerState{}
 
   @type t :: %__MODULE__{
           ip: String.t(),

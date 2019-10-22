@@ -36,12 +36,8 @@ defmodule Sonex.Network.State do
     GenServer.call(__MODULE__, :zones)
   end
 
-  def set_coordinator(uuid, coordinator_uuid) do
-    GenServer.call(__MODULE__, {:set_coordinator, uuid, coordinator_uuid})
-  end
-
-  def set_name(uuid, name) do
-    GenServer.call(__MODULE__, {:set_name, uuid, name})
+  def get_player(uuid) do
+    GenServer.call(__MODULE__, {:get_player, uuid})
   end
 
   def init(data) do
@@ -63,36 +59,8 @@ defmodule Sonex.Network.State do
     {:reply, res, state}
   end
 
-  def handle_call({:set_coordinator, uuid, coordinator_uuid}, _from, %NetState{players: players} = state) do
-    players =
-      players
-      |> Map.get(uuid)
-      |> case do
-        nil ->
-          players
-        player ->
-          Process.send(self(), {:broadcast, player, :updated}, [])
-          Map.put(players, uuid, %{player | coordinator_uuid: coordinator_uuid})
-        end
-
-
-    {:reply, players, %{state | players: players}}
-  end
-
-  def handle_call({:set_name, uuid, name}, _from, %NetState{players: players} = state) do
-    players =
-      players
-      |> Map.get(uuid)
-      |> case do
-        nil ->
-          players
-        player ->
-          Process.send(self(), {:broadcast, player, :updated}, [])
-          Map.put(players, uuid, %{player | name: name})
-        end
-
-
-    {:reply, players, %{state | players: players}}
+  def handle_call({:get_player, uuid}, _from, %NetState{players: players} = state) do
+    {:reply, Map.get(players, uuid), state}
   end
 
   def handle_call(:players, _from, %NetState{players: players} = state) do
@@ -165,7 +133,6 @@ defmodule Sonex.Network.State do
   def handle_info({:broadcast, device, key}, state) do
     Registry.dispatch(Sonex, "devices", fn entries ->
       for {pid, _} <- entries do
-        IO.inspect(pid, label: "pid in send")
         send(pid, {key, device})
       end
     end)

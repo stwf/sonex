@@ -1,6 +1,7 @@
 defmodule Sonex.SubHandlerRender do
   import SweetXml
   alias Sonex.SubHelpers
+  alias Sonex.Network.State
 
   def init(req, _opts) do
     handle(req, %{})
@@ -13,98 +14,76 @@ defmodule Sonex.SubHandlerRender do
     sub_info_base = SubHelpers.create_sub_data(request, :renderer)
 
     clean_xml = SubHelpers.clean_xml_str(data)
-    # "<dc:title> </dc:title>"
-    # IO.puts clean_xml
-
-    # IO.puts clean_xml
     event_xml = xpath(clean_xml, ~x"//e:propertyset/e:property/LastChange/*[1]"e)
-    # volume_state = xpath(event_xml, ~x"//Event/InstanceID/Volume/@val"il)
-    # mute_info = xpath(event_xml, ~x"//Event/InstanceID/Mute/@val"il)
-    player_pid = GenServer.whereis({:global, {:player, sub_info_base.from}})
+    
+    player = %{player_state: player_state} = State.get_player(sub_info_base.from)
 
-    _sub_content_map =
-      get_volume(player_pid, event_xml)
+    new_state =
+      player_state
+      |> get_volume(event_xml)
       |> get_mute(event_xml)
       |> get_bass(event_xml)
       |> get_treble(event_xml)
       |> get_loudness(event_xml)
 
-    # sub_info = %SubData{sub_info_base | content: sub_content_map}
+    player = %{player | player_state: new_state}
+    State.update_device(player)
 
     reply = :cowboy_req.reply(200, request)
-
-    # handle/2 returns a tuple starting containing :ok, the reply, and the
-    # current state of the handler.
     {:ok, reply, state}
   end
 
-  defp get_volume(pid, xml) do
+  defp get_volume(%PlayerState{} = p_state, xml) do
     case(xpath(xml, ~x"//Event/InstanceID/Volume"e)) do
       nil ->
-        pid
+        p_state
 
       _ ->
         [master_vol, left_vol, right_vol] = xpath(xml, ~x"//Event/InstanceID/Volume/@val"sl)
-        GenServer.cast(pid, {:set_volume, %{m: master_vol, l: left_vol, r: right_vol}})
-        # Map.put_new(map, :volume, %{m: master_vol, l: left_vol, r: right_vol } )
-        pid
+        %{p_state | volume: %{m: master_vol, l: left_vol, r: right_vol }}
     end
   end
 
-  defp get_mute(pid, xml) do
+  defp get_mute(%PlayerState{} = p_state, xml) do
     case(xpath(xml, ~x"//Event/InstanceID/Mute"e)) do
       nil ->
-        pid
+        p_state
 
       _ ->
         [master_m, _, _] = xpath(xml, ~x"//Event/InstanceID/Mute/@val"sl)
 
-        mute =
-          case(master_m) do
-            "0" -> false
-            "1" -> true
-          end
-
-        GenServer.cast(pid, {:set_mute, mute})
-        pid
+        %{p_state | mute: master_m == "1"}
     end
   end
 
-  defp get_treble(pid, xml) do
+  defp get_treble(%PlayerState{} = p_state, xml) do
     case(xpath(xml, ~x"//Event/InstanceID/Treble"e)) do
       nil ->
-        pid
+        p_state
 
       _ ->
-        GenServer.cast(pid, {:set_treble, xpath(xml, ~x"//Event/InstanceID/Treble/@val"i)})
-        pid
+        %{p_state |  treble: xpath(xml, ~x"//Event/InstanceID/Treble/@val"i)}
     end
   end
 
-  defp get_bass(pid, xml) do
+  defp get_bass(%PlayerState{} = p_state, xml) do
     case(xpath(xml, ~x"//Event/InstanceID/Bass"e)) do
       nil ->
-        pid
+        p_state
 
       _ ->
-        GenServer.cast(pid, {:set_bass, xpath(xml, ~x"//Event/InstanceID/Bass/@val"i)})
-        pid
+        %{p_state | bass: xpath(xml, ~x"//Event/InstanceID/Bass/@val"i)}
     end
   end
 
-  defp get_loudness(pid, xml) do
+  defp get_loudness(%PlayerState{} = p_state, xml) do
     case(xpath(xml, ~x"//Event/InstanceID/Loudness"e)) do
       nil ->
-        pid
+        p_state
 
       _ ->
-        loudness =
-          case(xpath(xml, ~x"//Event/InstanceID/Loudness/@val"s)) do
-            "0" -> false
-            "1" -> true
-          end
-
-        GenServer.cast(pid, {:set_loudness, loudness})
+        loudness = xpath(xml, ~x"//Event/InstanceID/Loudness/@val"s)
+        %{p_state | loudness: loudness == "1"}
     end
   end
 
