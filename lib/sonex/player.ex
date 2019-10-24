@@ -58,14 +58,14 @@ alias Sonex.Network.State
   def audio(%SonosDevice{} = device, :volume, level) when level > 0 and level < 100 do
     args = [["InstanceID", 0], ["Channel", "Master"], ["DesiredVolume", level]]
 
-    SOAP.build(:rendered, "SetVolume", args)
+    SOAP.build(:renderer, "SetVolume", args)
     |> SOAP.post(device)
   end
 
   def audio(%SonosDevice{} = device, :volume) do
     args = [["InstanceID", 0], ["Channel", "Master"]]
 
-    SOAP.build(:rendered, "GetVolume", args)
+    SOAP.build(:renderer, "GetVolume", args)
     |> SOAP.post(device)
   end
 
