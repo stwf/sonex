@@ -75,8 +75,8 @@ defmodule Sonex.Discovery do
     GenServer.stop(__MODULE__, "Done")
   end
 
-  def handle_info({:discovered, new_device}, state), do: {:noreply, state}
-  def handle_info({:start, new_device}, state), do: {:noreply, state}
+  def handle_info({:discovered, _new_device}, state), do: {:noreply, state}
+  def handle_info({:start, _new_device}, state), do: {:noreply, state}
   
   def handle_info({:updated, %SonosDevice{uuid: new_uuid} = new_device}, %{players: players} = state) do
     players = 
@@ -92,16 +92,6 @@ defmodule Sonex.Discovery do
       |> Enum.map(fn p -> if get_uuid(p) == new_uuid, do: new_device |> IO.inspect(label: "did replace player"), else: p end)
 
     {:noreply, %{state | players: players}}
-  end
-
-  def handle_cast(:kill, state) do
-    :ok = :gen_udp.close(state.socket)
-    {:noreply, state}
-  end
-
-  def handle_cast(:discover, state) do
-    :gen_udp.send(state.socket, @multicastaddr, @multicastport, @playersearch)
-    {:noreply, state}
   end
 
   def handle_info({:udp, _socket, ip, _fromport, packet}, state) do
@@ -128,25 +118,14 @@ defmodule Sonex.Discovery do
     {:noreply, state}
   end
 
-  defp build(id, ip, coord_id, name, icon, config) do
-    new_player = %ZonePlayer{}
-
-    %ZonePlayer{
-      new_player
-      | id: id,
-        name: name,
-        coordinator_id: coord_id,
-        info: %{
-          new_player.info
-          | ip: ip,
-            icon: icon,
-            config: config
-        }
-    }
+  def handle_cast(:kill, state) do
+    :ok = :gen_udp.close(state.socket)
+    {:noreply, state}
   end
 
-  defp knownplayer?(players, uuid) do
-    Enum.find_index(players, fn player -> get_uuid(player) == uuid end)
+  def handle_cast(:discover, state) do
+    :gen_udp.send(state.socket, @multicastaddr, @multicastport, @playersearch)
+    {:noreply, state}
   end
 
   defp attributes(%SonosDevice{} = player) do
@@ -234,8 +213,8 @@ defmodule Sonex.Discovery do
   defp get_uuid(%SonosDevice{uuid: new_uuid}), do: new_uuid
 
   def get_ip do
-    _eth0 = to_charlist("eth0")
-    en0 = to_charlist("en0")
+    dev_name = Application.get_env(:sonex, Sonex.Discovery)[:net_device_name]
+    en0 = to_charlist(dev_name)
     {:ok, test_socket} = :inet_udp.open(8989, [])
 
     ip_addr =
