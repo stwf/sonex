@@ -88,24 +88,6 @@ defmodule Sonex.SubMngr do
     |> handle_sub_response()
   end
 
-  defp unsubscribe_req(device, service, sub_id) do
-    uri = "http://#{device.info.ip}:1400#{service.event}"
-    req_headers = %{"SID" => sub_id}
-
-    valid_resp =
-      HTTPoison.request!(:unsubscribe, uri, "", req_headers)
-      |> handle_sub_response()
-
-    _resp =
-      case(valid_resp) do
-        {:ok, _res_body} ->
-          {:ok, %{msg: "Unsubscription successful"}}
-
-        {:error, err_msg} ->
-          {:error, err_msg}
-      end
-  end
-
   defp sub_headers(port, serv) do
     {:ok, {a, b, c, d}} = Sonex.Discovery.get_ip()
 

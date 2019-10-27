@@ -41,8 +41,6 @@ defmodule Sonex.Discovery do
         {:add_membership, {@multicastaddr, ip_addr}}
       ])
 
-#    {:ok, _} = Registry.register(Sonex, "devices", [])
-
     # fire two udp discover packets immediately
     :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
     :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
@@ -214,7 +212,6 @@ defmodule Sonex.Discovery do
 
   def get_ip do
     dev_name = Application.get_env(:sonex, Sonex.Discovery)[:net_device_name]
-      |> IO.inspect(label: "network name")
 
     en0 = to_charlist(dev_name)
     {:ok, test_socket} = :inet_udp.open(8989, [])

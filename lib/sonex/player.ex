@@ -68,13 +68,4 @@ alias Sonex.Network.State
     SOAP.build(:renderer, "GetVolume", args)
     |> SOAP.post(device)
   end
-
-  defp refresh_zones({:ok, response_body}) do
-    Sonex.Discovery.discover()
-    {:ok, response_body}
-  end
-
-  defp refresh_zones({:error, err_msg}) do
-    {:error, err_msg}
-  end
 end

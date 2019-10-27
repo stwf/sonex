@@ -12,10 +12,6 @@ defmodule Sonex.Network.State do
     GenServer.start_link(__MODULE__, initial_data(), name: __MODULE__)
   end
 
-  def get_player(name: _name) do
-
-  end
-
   def players do
     GenServer.call(__MODULE__, :players)
   end

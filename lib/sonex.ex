@@ -45,7 +45,7 @@ defmodule Sonex do
       Map.put(acc, :coord, player)
   end
 
-  defp accumulate_states(%{uuid: uuid} = player, acc) do
+  defp accumulate_states(player, acc) do
     case Map.get(acc, :player) do
       nil ->
         Map.put(acc, :player, [player])
