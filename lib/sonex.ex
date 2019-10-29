@@ -36,8 +36,12 @@ defmodule Sonex do
     Player.control(player, :stop)
   end
 
-  def set_volume(player, level) do
+  def set_volume(player, level) when is_binary(level) do
     Player.audio(player, :volume, String.to_integer(level))
+  end
+
+  def set_volume(player, level) do
+    Player.audio(player, :volume, level)
   end
 
   defp accumulate_states(%{uuid: uuid, coordinator_uuid: coordinator_uuid} = player, acc)
