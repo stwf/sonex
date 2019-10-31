@@ -1,5 +1,5 @@
 defmodule DiscoverState do
-  defstruct socket: nil
+  defstruct socket: nil, state: :starting
 
   @type t :: %__MODULE__{socket: pid}
 end

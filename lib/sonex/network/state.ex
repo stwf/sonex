@@ -1,6 +1,6 @@
 defmodule Sonex.Network.State do
   defmodule NetState do
-    defstruct current_zone: "", players: %{}, state: :starting
+    defstruct current_zone: "", players: %{}
   end
 
   use GenServer
