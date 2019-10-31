@@ -21,6 +21,8 @@ defmodule Sonex.Discovery do
   @multicastaddr {239, 255, 255, 250}
   @multicastport 1900
 
+  @polling_duration 60_000
+
   def start_link() do
     GenServer.start_link(__MODULE__, %DiscoverState{}, name: __MODULE__)
   end
@@ -28,23 +30,10 @@ defmodule Sonex.Discovery do
   def init(%DiscoverState{} = state) do
     # not really sure why i need an IP, does not seem to work on 0.0.0.0 after some timeout occurs...
     # needs to be passed a interface IP that is the same lan as sonos DLNA multicasts
-    {:ok, ip_addr} = get_ip()
+   
+    state = attempt_network_init(state)
 
-    {:ok, socket} =
-      :gen_udp.open(0, [
-        :binary,
-        :inet,
-        {:ip, ip_addr},
-        {:active, true},
-        {:multicast_if, ip_addr},
-        {:multicast_ttl, 4},
-        {:add_membership, {@multicastaddr, ip_addr}}
-      ])
-
-    # fire two udp discover packets immediately
-    :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
-    :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
-    {:ok, %DiscoverState{state | socket: socket}}
+    {:ok, state}
   end
 
   def terminate(_reason, %DiscoverState{socket: socket} = _state) when socket != nil do
@@ -124,6 +113,38 @@ defmodule Sonex.Discovery do
   def handle_cast(:discover, state) do
     :gen_udp.send(state.socket, @multicastaddr, @multicastport, @playersearch)
     {:noreply, state}
+  end
+
+  def handle_info(:initialize_network, state) do
+    IO.inspect(state, label: "handing initialize_network")
+    state = attempt_network_init(state)
+    {:noreply, state}
+  end
+
+  defp attempt_network_init(state) do
+    case get_ip() do
+      {:ok, ip_addr} ->
+
+        {:ok, socket} =
+          :gen_udp.open(0, [
+            :binary,
+            :inet,
+            {:ip, ip_addr},
+            {:active, true},
+            {:multicast_if, ip_addr},
+            {:multicast_ttl, 4},
+            {:add_membership, {@multicastaddr, ip_addr}}
+          ])
+
+        # fire two udp discover packets immediately
+        :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
+        :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
+        %DiscoverState{state | socket: socket, state: :connected}
+
+      {:err, _reason} ->
+        Process.send_after(self(), :initialize_network, @polling_duration)
+        %DiscoverState{state | state: :disconnected}
+    end
   end
 
   defp attributes(%SonosDevice{} = player) do
