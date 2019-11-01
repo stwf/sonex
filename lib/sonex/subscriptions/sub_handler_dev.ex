@@ -13,20 +13,14 @@ defmodule Sonex.SubHandlerDevice do
   def handle(request, state) do
     {:ok, data, _} = :cowboy_req.read_body(request, %{})
 
-    sub_info_base =
-      SubHelpers.create_sub_data(request, :device)
-      |> IO.inspect(label: "dev sub_info_base")
+    sub_info_base = SubHelpers.create_sub_data(request, :device)
 
     clean_xml = SubHelpers.clean_xml_str(data)
-    # "<dc:title> </dc:title>"
-    IO.puts(clean_xml)
 
-    # IO.puts clean_xml
     #  event_xml = xpath(clean_xml, ~x"//e:propertyset/e:property/LastChange/*[1]"e)
     # volume_state = xpath(event_xml, ~x"//Event/InstanceID/Volume/@val"il)
     # mute_info = xpath(event_xml, ~x"//Event/InstanceID/Mute/@val"il)
-
-    #  sub_info = %SubData{sub_info_base | content: sub_content_map}
+    #  sub_info = %SubscriptionEvent{sub_info_base | content: sub_content_map}
 
     IO.inspect(sub_info_base)
 

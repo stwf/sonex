@@ -21,7 +21,7 @@ defmodule Sonex.Network.State do
     Map.values(players)
   end
 
-  def update_device(%SonosDevice{} = device) do
+  def put_device(%SonosDevice{} = device) do
     GenServer.call(__MODULE__, {:update_device, device})
   end
 

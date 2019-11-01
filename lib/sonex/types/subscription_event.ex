@@ -1,4 +1,4 @@
-defmodule SubData do
+defmodule SubscriptionEvent do
   defstruct type: nil, sub_id: nil, from: nil, seq_num: nil, content: nil
 
   @type t :: %__MODULE__{

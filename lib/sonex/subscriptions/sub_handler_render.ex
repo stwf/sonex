@@ -27,7 +27,7 @@ defmodule Sonex.SubHandlerRender do
       |> get_loudness(event_xml)
 
     player = %{player | player_state: new_state}
-    State.update_device(player)
+    State.put_device(player)
 
     reply = :cowboy_req.reply(200, request)
     {:ok, reply, state}

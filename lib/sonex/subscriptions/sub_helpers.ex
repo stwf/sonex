@@ -3,7 +3,7 @@ defmodule Sonex.SubHelpers do
     "uuid:" <> uuid_raw = sid
     [header, main, _sub_id] = String.split(uuid_raw, "_")
     from_id = header <> "_" <> main
-    %SubData{from: from_id, seq_num: seq, sub_id: uuid_raw, type: type}
+    %SubscriptionEvent{from: from_id, seq_num: seq, sub_id: uuid_raw, type: type}
   end
 
   def create_sub_data(request, _type) do

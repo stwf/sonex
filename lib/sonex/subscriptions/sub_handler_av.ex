@@ -13,10 +13,6 @@ defmodule Sonex.SubHandlerAV do
     sub_info_base = SubHelpers.create_sub_data(request, :av)
 
     clean_xml = SubHelpers.clean_xml_str(data)
-    # "<dc:title> </dc:title>"
-    # IO.puts clean_xml
-
-    # IO.puts clean_xml
     event_xml = xpath(clean_xml, ~x"//e:propertyset/e:property/LastChange/*[1]"e)
 
     transport_state = xpath(event_xml, ~x"//Event/InstanceID/TransportState/@val"s)
@@ -39,7 +35,7 @@ defmodule Sonex.SubHandlerAV do
     }
 
     player = %{player | player_state: new_state}
-    State.update_device(player)
+    State.put_device(player)
 
     reply = :cowboy_req.reply(200, request)
 

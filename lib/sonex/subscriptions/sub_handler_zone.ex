@@ -13,7 +13,6 @@ defmodule Sonex.SubHandlerZone do
   def handle(request, state) do
     {:ok, data, _} = :cowboy_req.read_body(request, %{})
 
-    _sub_info_base = SubHelpers.create_sub_data(request, :zone)
     clean_xml = SubHelpers.clean_xml_str(data)
 
     zone_info =
@@ -33,11 +32,10 @@ defmodule Sonex.SubHandlerZone do
       Enum.each(zone_group.members, fn member ->
         player = State.get_player(member.uuid)
         player = %{player | coordinator_uuid: zone_group.coordinator_uuid, name: member.name}
-        State.update_device(player)
+        State.put_device(player)
       end)
     end)
 
-    # sub_info = %SubData{sub_info_base | content: zone_info}
     reply = :cowboy_req.reply(200, request)
 
     # handle/2 returns a tuple starting containing :ok, the reply, and the

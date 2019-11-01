@@ -23,6 +23,7 @@ defmodule SonosDevice do
           version: String.t(),
           coordinator_uuid: String.t(),
           coordinator_pid: reference,
-          info: String.t()
+          info: String.t(),
+          player_state: PlayerState.t()
         }
 end
