@@ -1,7 +1,7 @@
 defmodule Sonex.Player do
   require Logger
   alias Sonex.SOAP
-alias Sonex.Network.State
+  alias Sonex.Network.State
 
   def setName(%SonosDevice{} = device, new_name) do
     {:ok, _} =

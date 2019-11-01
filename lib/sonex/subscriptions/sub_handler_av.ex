@@ -24,9 +24,9 @@ defmodule Sonex.SubHandlerAV do
 
     player = %{player_state: player_state} = State.get_player(sub_info_base.from)
 
-    new_state =
-      %{player_state |
-        current_state: transport_state,
+    new_state = %{
+      player_state
+      | current_state: transport_state,
         current_mode: xpath(event_xml, ~x"//Event/InstanceID/CurrentPlayMode/@val"s),
         current_track: xpath(event_xml, ~x"//Event/InstanceID/CurrentTrack/@val"i),
         total_tracks: xpath(event_xml, ~x"//Event/InstanceID/NumberOfTracks/@val"i),
@@ -36,7 +36,7 @@ defmodule Sonex.SubHandlerAV do
           album: album,
           duration: xpath(event_xml, ~x"//Event/InstanceID/CurrentTrackDuration/@val"s)
         }
-      }
+    }
 
     player = %{player | player_state: new_state}
     State.update_device(player)
@@ -67,9 +67,9 @@ defmodule Sonex.SubHandlerAV do
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
   def terminate(_reason, _request, _state) do
- #    IO.puts("Terminating for reason: #{inspect(reason)}")
-  #   IO.puts("Terminating after request: #{inspect(request)}")
-  #   IO.puts("Terminating with state: #{inspect(state)}")
+    #    IO.puts("Terminating for reason: #{inspect(reason)}")
+    #   IO.puts("Terminating after request: #{inspect(request)}")
+    #   IO.puts("Terminating with state: #{inspect(state)}")
     :ok
   end
 end

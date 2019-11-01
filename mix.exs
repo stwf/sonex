@@ -29,9 +29,6 @@ defmodule Sonex.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [
-      {:httpoison, "~> 1.6"},
-      {:sweet_xml, "~> 0.6"},
-      {:cowboy, "~> 2.6"}]
+    [{:httpoison, "~> 1.6"}, {:sweet_xml, "~> 0.6"}, {:cowboy, "~> 2.6"}]
   end
 end

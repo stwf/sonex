@@ -15,7 +15,7 @@ defmodule Sonex.SubHandlerRender do
 
     clean_xml = SubHelpers.clean_xml_str(data)
     event_xml = xpath(clean_xml, ~x"//e:propertyset/e:property/LastChange/*[1]"e)
-    
+
     player = %{player_state: player_state} = State.get_player(sub_info_base.from)
 
     new_state =
@@ -40,7 +40,7 @@ defmodule Sonex.SubHandlerRender do
 
       _ ->
         [master_vol, left_vol, right_vol] = xpath(xml, ~x"//Event/InstanceID/Volume/@val"sl)
-        %{p_state | volume: %{m: master_vol, l: left_vol, r: right_vol }}
+        %{p_state | volume: %{m: master_vol, l: left_vol, r: right_vol}}
     end
   end
 
@@ -62,7 +62,7 @@ defmodule Sonex.SubHandlerRender do
         p_state
 
       _ ->
-        %{p_state |  treble: xpath(xml, ~x"//Event/InstanceID/Treble/@val"i)}
+        %{p_state | treble: xpath(xml, ~x"//Event/InstanceID/Treble/@val"i)}
     end
   end
 
@@ -90,9 +90,9 @@ defmodule Sonex.SubHandlerRender do
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
   def terminate(_reason, _request, _state) do
- #   IO.puts("Render Terminating for reason: #{inspect(reason)}")
-#    IO.puts("Terminating after request: #{inspect(request)}")
-#    IO.puts("Terminating with state: #{inspect(state)}")
+    #   IO.puts("Render Terminating for reason: #{inspect(reason)}")
+    #    IO.puts("Terminating after request: #{inspect(request)}")
+    #    IO.puts("Terminating with state: #{inspect(state)}")
     :ok
   end
 end

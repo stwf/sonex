@@ -6,11 +6,11 @@ defmodule Sonex.Application do
 
   def start(_type, _args) do
     children = [
-      {Registry,  keys: :duplicate, name: Sonex},
+      {Registry, keys: :duplicate, name: Sonex},
       Sonex.Network.State,
       Sonex.EventMngr,
       worker(Sonex.Discovery, []),
-      worker(Sonex.SubMngr, []),
+      worker(Sonex.SubMngr, [])
     ]
 
     opts = [strategy: :one_for_one, name: LibAstroEx.Supervisor]

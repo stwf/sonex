@@ -1,6 +1,6 @@
 defmodule Sonex.SubHandlerZone do
   import SweetXml
-  
+
   alias Sonex.SubHelpers
   alias Sonex.Network.State
 
@@ -29,7 +29,6 @@ defmodule Sonex.SubHandlerZone do
         ]
       )
 
-
     Enum.each(zone_info, fn zone_group ->
       Enum.each(zone_group.members, fn member ->
         player = State.get_player(member.uuid)
@@ -38,7 +37,7 @@ defmodule Sonex.SubHandlerZone do
       end)
     end)
 
-    #sub_info = %SubData{sub_info_base | content: zone_info}
+    # sub_info = %SubData{sub_info_base | content: zone_info}
     reply = :cowboy_req.reply(200, request)
 
     # handle/2 returns a tuple starting containing :ok, the reply, and the
@@ -49,9 +48,9 @@ defmodule Sonex.SubHandlerZone do
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
   def terminate(_reason, _request, _state) do
-#    IO.puts("Terminating for reason: #{inspect(reason)}")
-#    IO.puts("Terminating after request: #{inspect(request)}")
-#    IO.puts("Terminating with state: #{inspect(state)}")
+    #    IO.puts("Terminating for reason: #{inspect(reason)}")
+    #    IO.puts("Terminating after request: #{inspect(request)}")
+    #    IO.puts("Terminating with state: #{inspect(state)}")
     :ok
   end
 end

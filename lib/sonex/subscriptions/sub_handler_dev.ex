@@ -1,11 +1,11 @@
 # not using this, getting enough from zone sub
 defmodule Sonex.SubHandlerDevice do
-#  import SweetXml
+  #  import SweetXml
   alias Sonex.SubHelpers
 
   def init(req, _opts) do
     req |> IO.inspect(label: "device req")
-        handle(req, %{})
+    handle(req, %{})
 
     {:ok, req, :no_state}
   end
@@ -13,7 +13,8 @@ defmodule Sonex.SubHandlerDevice do
   def handle(request, state) do
     {:ok, data, _} = :cowboy_req.read_body(request, %{})
 
-    sub_info_base = SubHelpers.create_sub_data(request, :device)
+    sub_info_base =
+      SubHelpers.create_sub_data(request, :device)
       |> IO.inspect(label: "dev sub_info_base")
 
     clean_xml = SubHelpers.clean_xml_str(data)
@@ -39,9 +40,9 @@ defmodule Sonex.SubHandlerDevice do
   # Termination handler.  Usually you don't do much with this.  If things are breaking,
   # try uncommenting the output lines here to get some more info on what's happening.
   def terminate(_reason, _request, _state) do
-#    IO.puts("Terminating for reason: #{inspect(reason)}")
-#    IO.puts("Terminating after request: #{inspect(request)}")
-#    IO.puts("Terminating with state: #{inspect(state)}")
+    #    IO.puts("Terminating for reason: #{inspect(reason)}")
+    #    IO.puts("Terminating after request: #{inspect(request)}")
+    #    IO.puts("Terminating with state: #{inspect(state)}")
     :ok
   end
 end

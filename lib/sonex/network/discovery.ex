@@ -30,7 +30,7 @@ defmodule Sonex.Discovery do
   def init(%DiscoverState{} = state) do
     # not really sure why i need an IP, does not seem to work on 0.0.0.0 after some timeout occurs...
     # needs to be passed a interface IP that is the same lan as sonos DLNA multicasts
-   
+
     state = attempt_network_init(state)
 
     {:ok, state}
@@ -64,29 +64,39 @@ defmodule Sonex.Discovery do
 
   def handle_info({:discovered, _new_device}, state), do: {:noreply, state}
   def handle_info({:start, _new_device}, state), do: {:noreply, state}
-  
-  def handle_info({:updated, %SonosDevice{uuid: new_uuid} = new_device}, %{players: players} = state) do
-    players = 
+
+  def handle_info(
+        {:updated, %SonosDevice{uuid: new_uuid} = new_device},
+        %{players: players} = state
+      ) do
+    players =
       players
-      |> Enum.map(fn p -> if get_uuid(p) == new_uuid, do: new_device |> IO.inspect(label: "did replace dev"), else: p end)
+      |> Enum.map(fn p ->
+        if get_uuid(p) == new_uuid,
+          do: new_device |> IO.inspect(label: "did replace dev"),
+          else: p
+      end)
 
     {:noreply, %{state | players: players}}
   end
 
   def handle_info({:updated, %ZonePlayer{id: new_uuid} = new_device}, %{players: players} = state) do
-    players = 
+    players =
       players
-      |> Enum.map(fn p -> if get_uuid(p) == new_uuid, do: new_device |> IO.inspect(label: "did replace player"), else: p end)
+      |> Enum.map(fn p ->
+        if get_uuid(p) == new_uuid,
+          do: new_device |> IO.inspect(label: "did replace player"),
+          else: p
+      end)
 
     {:noreply, %{state | players: players}}
   end
 
   def handle_info({:udp, _socket, ip, _fromport, packet}, state) do
     with this_player <- parse_upnp(ip, packet),
-          {name, icon, config} <- attributes(this_player),
-          {:bridge, true} <- {:bridge, name != "BRIDGE"},
-          {_, zone_coordinator, _} = group_attributes(this_player) do
-
+         {name, icon, config} <- attributes(this_player),
+         {:bridge, true} <- {:bridge, name != "BRIDGE"},
+         {_, zone_coordinator, _} = group_attributes(this_player) do
       player = %SonosDevice{
         this_player
         | name: name,
@@ -99,9 +109,11 @@ defmodule Sonex.Discovery do
     else
       {:bridge, true} ->
         Logger.debug("found bridge")
+
       e ->
         IO.inspect(e, label: "the errors")
     end
+
     {:noreply, state}
   end
 
@@ -245,6 +257,7 @@ defmodule Sonex.Discovery do
           case :prim_inet.ifget(test_socket, en0, [:addr]) do
             {:ok, [addr: ip]} ->
               ip
+
             {:ok, []} ->
               nil
           end

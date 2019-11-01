@@ -48,7 +48,6 @@ defmodule Sonex.SubMngr do
   def handle_call({:subscribe, device, service}, _from, state) do
     {:ok, sub_id} = subscribe_req(device, service, state.port)
 
-
     # resubscribe 1 minute before sub timesout
     {:ok, timer} = :timer.send_interval(@resub, {:sub_interval, device, service})
 
@@ -65,7 +64,6 @@ defmodule Sonex.SubMngr do
     subscribe_req(device, service, state.port)
     {:noreply, state}
   end
-
 
   def handle_info(data, state) do
     IO.inspect(data, label: "unknown handle_info")
