@@ -123,8 +123,11 @@ defmodule Sonex.Discovery do
 
   defp attempt_network_init(state) do
     case get_ip() do
-      {:ok, ip_addr} ->
+      {:ok, nil} ->
+        Process.send_after(self(), :initialize_network, @polling_duration)
+        %DiscoverState{state | state: :disconnected}
 
+      {:ok, ip_addr} ->
         {:ok, socket} =
           :gen_udp.open(0, [
             :binary,
@@ -140,10 +143,6 @@ defmodule Sonex.Discovery do
         :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
         :gen_udp.send(socket, @multicastaddr, @multicastport, @playersearch)
         %DiscoverState{state | socket: socket, state: :connected}
-
-      {:err, _reason} ->
-        Process.send_after(self(), :initialize_network, @polling_duration)
-        %DiscoverState{state | state: :disconnected}
     end
   end
 
@@ -243,8 +242,12 @@ defmodule Sonex.Discovery do
           ip
 
         {:ok, []} ->
-          {:ok, [addr: ip]} = :prim_inet.ifget(test_socket, en0, [:addr])
-          ip
+          case :prim_inet.ifget(test_socket, en0, [:addr]) do
+            {:ok, [addr: ip]} ->
+              ip
+            {:ok, []} ->
+              nil
+          end
       end
 
     :inet_udp.close(test_socket)
